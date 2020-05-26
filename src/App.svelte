@@ -1,10 +1,11 @@
 <script>
   import cred from './credential'
-  import Events from './Events.svelte'
+  import ButtonDate from './components/ButtonDate.svelte'
+  import Events from './components/Events.svelte'
 
-  let googleapi = undefined
+  let mygooglecal = undefined
   let items = undefined
-  $: console.log(`sudahsignin ${sudahsignin}`)
+  let formattedSelected
 
   // Client ID and API key from the Developer Console
   var CLIENT_ID = cred.CLIENT_ID
@@ -80,6 +81,7 @@
           // Handle the initial sign-in state.
           sudahsignin = gapi.auth2.getAuthInstance().isSignedIn.get()
           updateSigninStatus(sudahsignin)
+          mygooglecal = gapi.client.calendar
         },
         function (error) {
           appendPre(JSON.stringify(error, null, 2))
@@ -96,7 +98,7 @@
     sudahsignin = isSignedIn
     if (isSignedIn) {
       // listUpcomingEvents()
-      senarai()
+      // senarai()
     }
   }
 
@@ -113,27 +115,26 @@
   function handleSignoutClick(event) {
     gapi.auth2.getAuthInstance().signOut()
   }
-
-  function senarai() {
-    gapi.client.calendar.events
-      .list({
-        calendarId: 'primary',
-        timeMin: new Date().toISOString(),
-        showDeleted: false,
-        singleEvents: true,
-        maxResults: 10,
-        orderBy: 'startTime',
-      })
-      .then((response) => {
-        items = response.result.items
-        console.log(items)
-      })
-  }
 </script>
 
-<main>
+<style>
+  main {
+    width: 100%;
+    margin: 1rem;
+    padding: 1rem;
+  }
+  header {
+    display: flex;
+    justify-content: space-around;
+  }
+</style>
 
-  <nav>
+<main>
+  <header>
+    <span>
+      Pick a date:
+      <ButtonDate bind:formattedSelected />
+    </span>
 
     {#if sudahsignin === 'undefined'}
       <p>loading...</p>
@@ -143,12 +144,12 @@
       <button on:click={handleAuthClick}>Authorize</button>
     {/if}
 
-  </nav>
+  </header>
 
-  <Events {items} />
+  <Events calendar={mygooglecal} {formattedSelected} />
+
 </main>
 
 <!-- 
-
   chrome://flags/#same-site-by-default-cookies
  -->
